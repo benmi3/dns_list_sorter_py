@@ -1,0 +1,24 @@
+[project]
+name = "Pihole_list_sorter"
+version = "0.0.1"
+dependencies = [
+    "toml>=0.10.2",
+]
+requires-python = ">=3.12"
+authors = [
+  {name = "Benjamin Jørgensen", email = "me@benmi.me"},
+]
+maintainers = [
+  {name = "Benjamin Jørgensen", email = "me@benmi.me"},
+]
+description = "Pihole list sorter"
+readme = "README.md"
+license = {file = "LICENSE.md"}
+keywords = ["comment"]
+
+[project.urls]
+Homepage = "https://example.com"
+Documentation = "https://readthedocs.org"
+Repository = "https://github.com/me/spam.git"
+"Bug Tracker" = "https://github.com/me/spam/issues"
+Changelog = "https://github.com/me/spam/blob/master/CHANGELOG.md"

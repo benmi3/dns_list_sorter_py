@@ -1,0 +1,40 @@
+[Suspicious]
+link_1 = "https://raw.githubusercontent.com/PolishFiltersTeam/KADhosts/master/KADhosts.txt"
+link_2 = "https://raw.githubusercontent.com/FadeMind/hosts.extras/master/add.Spam/hosts"
+link_3 = "https://v.firebog.net/hosts/static/w3kbl.txt"
+
+[Advertising]
+link_1 = "https://adaway.org/hosts.txt"
+link_2 = "https://v.firebog.net/hosts/AdguardDNS.txt"
+link_3 = "https://v.firebog.net/hosts/Admiral.txt"
+link_4 = "https://raw.githubusercontent.com/anudeepND/blacklist/master/adservers.txt"
+link_5 = "https://s3.amazonaws.com/lists.disconnect.me/simple_ad.txt"
+link_6 = "https://v.firebog.net/hosts/Easylist.txt"
+link_7 = "https://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts&showintro=0&mimetype=plaintext"
+link_8 = "https://raw.githubusercontent.com/FadeMind/hosts.extras/master/UncheckyAds/hosts"
+link_9 = "https://raw.githubusercontent.com/bigdargon/hostsVN/master/hosts"
+
+[Tracking]
+link_1 = "https://v.firebog.net/hosts/Easyprivacy.txt"
+link_2 = "https://v.firebog.net/hosts/Prigent-Ads.txt"
+link_3 = "https://raw.githubusercontent.com/FadeMind/hosts.extras/master/add.2o7Net/hosts"
+link_4 = "https://raw.githubusercontent.com/crazy-max/WindowsSpyBlocker/master/data/hosts/spy.txt"
+link_5 = "https://hostfiles.frogeye.fr/firstparty-trackers-hosts.txt"
+
+[Malicious]
+link_1 = "https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareHosts.txt"
+link_2 = "https://osint.digitalside.it/Threat-Intel/lists/latestdomains.txt"
+link_3 = "https://s3.amazonaws.com/lists.disconnect.me/simple_malvertising.txt"
+link_4 = "https://v.firebog.net/hosts/Prigent-Crypto.txt"
+link_5 = "https://raw.githubusercontent.com/FadeMind/hosts.extras/master/add.Risk/hosts"
+link_6 = "https://bitbucket.org/ethanr/dns-blacklists/raw/8575c9f96e5b4a1308f2f12394abd86d0927a4a0/bad_lists/Mandiant_APT1_Report_Appendix_D.txt"
+link_7 = "https://phishing.army/download/phishing_army_blocklist_extended.txt"
+link_8 = "https://gitlab.com/quidsup/notrack-blocklists/raw/master/notrack-malware.txt"
+link_9 = "https://v.firebog.net/hosts/RPiList-Malware.txt"
+link_10 = "https://v.firebog.net/hosts/RPiList-Phishing.txt"
+link_11 = "https://raw.githubusercontent.com/Spam404/lists/master/main-blacklist.txt"
+link_12 = "https://raw.githubusercontent.com/AssoEchap/stalkerware-indicators/master/generated/hosts"
+link_13 = "https://urlhaus.abuse.ch/downloads/hostfile/"
+
+[Other]
+link_ = "https://zerodot1.gitlab.io/CoinBlockerLists/hosts_browser"
