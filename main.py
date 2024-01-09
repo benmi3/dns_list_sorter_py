@@ -1,6 +1,8 @@
 import toml
 import requests
-from time import sleep
+import asyncio
+# from time import sleep
+
 
 def get_toml_data(file_path) -> dict:
     try:
@@ -16,44 +18,88 @@ def get_toml_data(file_path) -> dict:
         print(f"Error: {e}")
 
 
-def file_write_filter(cur_section: str, cur_line: str) -> bool:
-    if not cur_line.startswith("#"):
-        print(f"section: {cur_section} \nLine: {cur_line}")
-        list_name = f"sorted_list_{cur_section}.text"
-        with open(list_name) as file_print:
-            file_print.write(f"\n{cur_line}")
-        return True
-    else:
-        return False
+class DnsList:
 
+    def get_white_list(self):
+        with open(self.path_to_whitelist, 'r') as file_reader:
+            self.white_list = file_reader.read()
 
-def main():
+    def get_toml_data(self, file_path) -> dict:
+        try:
+            # Load TOML file
+            with open(file_path, 'r') as file:
+                toml_data = toml.load(file)
 
-    path_to_file = "raw_lists.toml"
-    toml_data = get_toml_data(path_to_file)
-    white_list = ['google.com',]
+                return toml_data
 
-    def filter_condition(item):
-        return not (isinstance(item, str) and (item.startswith("#") or any(word in item for word in white_list)))
+        except FileNotFoundError:
+            print(f"Error: File '{file_path}' not found.")
+        except Exception as e:
+            print(f"Error: {e}")
 
-    # Iterate through the TOML data
-    for section, values in toml_data.items():
+    def no_dupes(self, list1: list) -> list:
+        set_1 = set(list1)
+        list_no_dupes = [item for item in self.full_list if item not in set_1]
+        return list(list_no_dupes)
+
+    def join_lists(self, list1: list, list2: list) -> list:
+        no_dupes_list = self.no_dupes(list2)
+        return list(set(list1).union(set(no_dupes_list)))
+
+    def has_hash(self, item):
+        return isinstance(item, str) and item.startswith("#")
+
+    def whitelist_filter(self, item):
+        return any(word in item for word in self.white_list)
+
+    def filter_condition(self, item):
+        return not (self.has_hash(item) or self.whitelist_filter(item))
+
+    def filter_list(self, list1):
+        return list(filter(self.filter_condition, list1))
+
+    async def print_to_file(self, section: str, values: dict) -> bool:
         print(f"Section: {section}")
         list_name = f"sorted_list_{section}.txt"
-        section_list = []
+        self.section_list = []
         with open(list_name, 'w+') as file:
             for key, value in values.items():
                 r = requests.get(value)
                 if r.status_code == 200:
-                    print(r.status_code)
+                    print(f"Section: {section} Code: {r.status_code}")
                     new_list = r.text.split('\n')
-                    section_list = list(set(section_list).union(set(new_list)))
-                    section_list = list(filter(filter_condition, section_list + new_list))
+                    joined_list = self.join_lists(
+                        self.section_list,
+                        new_list)
+                    self.section_list = self.filter_list(joined_list)
                 else:
-                    print(f"Failed to retrieve content. Status code: {r.status_code}")
-            file.writelines(map(lambda x: x + '\n', section_list))
+                    print(f"""
+                    Failed to retrieve content.
+                    Status code: {r.status_code}
+                    """)
+            self.full_list.extend(self.section_list)
+            file.writelines(map(lambda x: x + '\n', self.section_list))
+        return True
 
+    async def do_the_loop(self) -> bool:
+        print("Starting loop")
+        # Iterate through the TOML data
+        tasks = [self.print_to_file(
+            section,
+            values) for section, values in self.toml_data.items()]
+        print("Waiting for the loop to finish")
+        await asyncio.gather(*tasks)
+        print("Finished!")
+        return True
+
+    def __init__(self, path_to_file: str, path_to_whitelist: str):
+        self.path_to_file = path_to_file
+        self.path_to_whitelist = path_to_whitelist
+        self.toml_data = self.get_toml_data(self.path_to_file)
+        self.full_list = []
 
 
 if __name__ == "__main__":
-    main()
+    dns_lister = DnsList("raw_lists.toml", "whitelist.txt")
+    asyncio.run(dns_lister.do_the_loop())
+    #finish_check = dns_lister.do_the_loop()

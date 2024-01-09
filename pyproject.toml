@@ -3,6 +3,7 @@ name = "Pihole_list_sorter"
 version = "0.0.1"
 dependencies = [
     "toml>=0.10.2",
+    "requests>=2.31.0"
 ]
 requires-python = ">=3.12"
 authors = [
