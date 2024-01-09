@@ -58,25 +58,27 @@ class DnsList:
     def filter_list(self, list1):
         return list(filter(self.filter_condition, list1))
 
+    async def async_requests_get(self, url: str) -> list:
+        r = requests.get(url)
+        if r.status_code == 200:
+            list_response = r.text.split('\n')
+            return list_response
+        else:
+            return []
+
     async def print_to_file(self, section: str, values: dict) -> bool:
         print(f"Section: {section}")
         list_name = f"sorted_list_{section}.txt"
         self.section_list = []
+        self.full_list_dict[section] = []
         with open(list_name, 'w+') as file:
             for key, value in values.items():
-                r = requests.get(value)
-                if r.status_code == 200:
-                    print(f"Section: {section} Code: {r.status_code}")
-                    new_list = r.text.split('\n')
-                    joined_list = self.join_lists(
-                        self.section_list,
-                        new_list)
-                    self.section_list = self.filter_list(joined_list)
-                else:
-                    print(f"""
-                    Failed to retrieve content.
-                    Status code: {r.status_code}
-                    """)
+                print(f"Section: {section} | URL: {value}")
+                new_list = await self.async_requests_get(value)
+                joined_list = self.join_lists(
+                    self.section_list,
+                    new_list)
+                self.section_list = self.filter_list(joined_list)
             self.full_list.extend(self.section_list)
             file.writelines(map(lambda x: x + '\n', self.section_list))
         return True
@@ -93,6 +95,7 @@ class DnsList:
         return True
 
     def __init__(self, path_to_file: str, path_to_whitelist: str):
+        self.full_list_dict = {}
         self.path_to_file = path_to_file
         self.path_to_whitelist = path_to_whitelist
         self.toml_data = self.get_toml_data(self.path_to_file)
