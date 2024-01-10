@@ -1,28 +1,14 @@
 import toml
-import requests
 import asyncio
-# from time import sleep
+import httpx
+import time
 
+import concurrent.futures
 
-def get_toml_data(file_path) -> dict:
-    try:
-        # Load TOML file
-        with open(file_path, 'r') as file:
-            toml_data = toml.load(file)
-
-            return toml_data
-
-    except FileNotFoundError:
-        print(f"Error: File '{file_path}' not found.")
-    except Exception as e:
-        print(f"Error: {e}")
+start_time = time.time()
 
 
 class DnsList:
-
-    def get_white_list(self):
-        with open(self.path_to_whitelist, 'r') as file_reader:
-            self.white_list = file_reader.read()
 
     def get_toml_data(self, file_path) -> dict:
         try:
@@ -37,60 +23,71 @@ class DnsList:
         except Exception as e:
             print(f"Error: {e}")
 
-    def no_dupes(self, list1: list) -> list:
-        set_1 = set(list1)
-        list_no_dupes = [item for item in self.full_list if item not in set_1]
-        return list(list_no_dupes)
-
-    def join_lists(self, list1: list, list2: list) -> list:
-        no_dupes_list = self.no_dupes(list2)
-        return list(set(list1).union(set(no_dupes_list)))
-
-    def has_hash(self, item):
-        return isinstance(item, str) and item.startswith("#")
-
-    def whitelist_filter(self, item):
-        return any(word in item for word in self.white_list)
-
-    def filter_condition(self, item):
-        return not (self.has_hash(item) or self.whitelist_filter(item))
+    def filter_urls(self, input_list):
+        s = tuple(["#", "!", ":"])
+        return list(filter(lambda x: not x.startswith(s) and x not in self.white_list + self.full_list, input_list))
 
     def filter_list(self, list1):
-        return list(filter(self.filter_condition, list1))
+        return self.filter_urls(list1)
 
-    async def async_requests_get(self, url: str) -> list:
-        r = requests.get(url)
+    async def get_list(self, client, url):
+        r = await client.get(url)
         if r.status_code == 200:
-            list_response = r.text.split('\n')
-            return list_response
+            return r.text.split('\n')
         else:
             return []
 
-    async def print_to_file(self, section: str, values: dict) -> bool:
-        print(f"Section: {section}")
-        list_name = f"sorted_list_{section}.txt"
-        self.section_list = []
-        self.full_list_dict[section] = []
-        with open(list_name, 'w+') as file:
-            for key, value in values.items():
-                print(f"Section: {section} | URL: {value}")
-                new_list = await self.async_requests_get(value)
-                joined_list = self.join_lists(
-                    self.section_list,
-                    new_list)
-                self.section_list = self.filter_list(joined_list)
-            self.full_list.extend(self.section_list)
-            file.writelines(map(lambda x: x + '\n', self.section_list))
+    async def iterate_through_urls(self, section: str, values: dict) -> bool:
+        async with httpx.AsyncClient() as client:
+            tasks = []
+            for _, url in values.items():
+                print(f"Sendt Request to: {url}")
+                tasks.append(asyncio.ensure_future(self.get_list(client, url)))
+
+            new_list = await asyncio.gather(*tasks)
+            self.full_list_dict[section] = new_list[0]
         return True
+
+    async def actually_print(self):
+        for key in self.full_list_dict.keys():
+            list_name = f"sorted_list_{key}.txt"
+            print(f"Sorting: {key}")
+            self.section_list = self.filter_list(self.full_list_dict[key])
+            self.full_list.extend(self.section_list)
+            print(f"Now printing {key} to {list_name}")
+            with open(list_name, 'w+') as file:
+                file.writelines(map(lambda x: x + '\n', self.section_list))
+
+    async def print_to_file(self, key: str) -> bool:
+        list_name = f"sorted_list_{key}.txt"
+        print(f"Sorting: {key}")
+        self.full_list_dict[key] = self.filter_list(self.full_list_dict[key])
+        self.full_list.extend(self.full_list_dict[key])
+        print(f"Now printing {key} to {list_name}")
+        with open(list_name, 'w+') as file:
+            for item in self.full_list_dict[key]:
+                file.write(str(item) + "\n")
+            #file.writelines(map(lambda x: x + '\n', self.full_list_dict[key]))
+
 
     async def do_the_loop(self) -> bool:
         print("Starting loop")
-        # Iterate through the TOML data
-        tasks = [self.print_to_file(
-            section,
-            values) for section, values in self.toml_data.items()]
+        print("Iterate through toml data\nRequsting data from urls")
+        tasks = []
+        for section, values in self.toml_data.items():
+            tasks.append(self.iterate_through_urls(section, values))
         print("Waiting for the loop to finish")
         await asyncio.gather(*tasks)
+        print("Filter through lists\nPrinting the lists to files")
+        #await self.actually_print()
+        # #------------------------------------------------------
+        prints = []
+        for key in self.full_list_dict.keys():
+            prints.append(self.print_to_file(key))
+
+        await asyncio.gather(*prints)
+
+        # #------------------------------------------------------
         print("Finished!")
         return True
 
@@ -100,9 +97,11 @@ class DnsList:
         self.path_to_whitelist = path_to_whitelist
         self.toml_data = self.get_toml_data(self.path_to_file)
         self.full_list = []
+        self.white_list = open(self.path_to_whitelist).read().split('\n')
+        print(self.white_list)
 
 
 if __name__ == "__main__":
-    dns_lister = DnsList("raw_lists.toml", "whitelist.txt")
+    dns_lister = DnsList("raw_lists.toml", "white_list.txt")
     asyncio.run(dns_lister.do_the_loop())
-    #finish_check = dns_lister.do_the_loop()
+    print(f"Time used to execute:\n{time.time() - start_time}")
